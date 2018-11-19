@@ -7,14 +7,14 @@ class MAASRequires(Endpoint):
 
     @when('endpoint.{endpoint_name}.changed')
     def changed(self):
-        if any(unit.received['secret'] for unit in self.all_units):
-            set_flag(self.expand_name('endpoint.{endpoint_name}.available'))
+        if any(unit.received['secret'] for unit in self.all_joined_units):
+            set_flag(self.expand_name('available'))
 
     @when_not('endpoint.{endpoint_name}.joined')
     def broken(self):
-        clear_flag(self.expand_name('endpoint.{endpoint_name}.available'))
+        clear_flag(self.expand_name('available'))
 
-    def services(self):
+    def list_unit_data(self):
         """
         Returns a list of available HTTP services and their associated hosts
         and ports.
@@ -33,19 +33,15 @@ class MAASRequires(Endpoint):
                 # ...
             ]
         """
-        services = {}
+        units_data = []
         for relation in self.relations:
-            service_name = relation.application_name
-            service = services.setdefault(service_name, {
-                'service_name': service_name,
-                'hosts': [],
-            })
-            for unit in relation.units:
-                secret = unit.received_raw['secret']
-                maas_url = unit.received_raw['maas_url']
-                if maas_url and secret:
-                    service['hosts'].append({
-                        'secret': secret,
-                        'maas_url': maas_url,
-                    })
-        return [s for s in services.values() if s['hosts']]
+            for unit in relation.joined_units:
+                secret = unit.received['secret']
+                maas_url = unit.received['maas_url']
+                if not (maas_url and secret):
+                    continue
+                units_data.append({
+                    'secret': secret,
+                    'maas_url': maas_url,
+                })
+        return units_data

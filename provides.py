@@ -7,11 +7,11 @@ class MAASProvides(Endpoint):
 
     @when('endpoint.{endpoint_name}.joined')
     def joined(self):
-        set_flag(self.expand_name('endpoint.{endpoint_name}.available'))
+        set_flag(self.expand_name('available'))
 
     @when_not('endpoint.{endpoint_name}.joined')
     def broken(self):
-        clear_flag(self.expand_name('endpoint.{endpoint_name}.available'))
+        clear_flag(self.expand_name('available'))
 
     def configure(self, maas_url, secret):
         for relation in self.relations:
